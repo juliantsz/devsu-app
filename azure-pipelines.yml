@@ -56,6 +56,7 @@ stages:
 
 - stage: Build
   displayName: Build And Push
+  dependsOn: Preconfig
   jobs:
   - job: Build
     displayName: Maven Package
@@ -105,6 +106,7 @@ stages:
     
 - stage: Staging
   displayName: Deploy Staging
+  dependsOn: Preconfig
   jobs:
   - job: Staging
     displayName: Pull Image From Dev
@@ -132,6 +134,7 @@ stages:
 
 - stage: Prod
   displayName: Deploy Prod
+  dependsOn: Preconfig
   jobs:
   - job: Prod
     displayName: Pull Image From Stg
