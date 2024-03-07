@@ -16,25 +16,6 @@ variables:
   prodEcrName: 'devsu-prod'
 
 stages:
-- stage: Preconfig
-  displayName: Get artifact version
-  jobs:
-  - job: Script
-    displayName: Powershell script
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: PowerShell@2
-      name: VersionStep
-      displayName: 'Extract version from pom.xml'
-      inputs:
-        targetType: 'inline'
-        script: |
-          gci
-          $pomVersion = [xml] (Get-Content pom.xml)
-          $version = $pomVersion.project.version
-          Write-Host "##vso[task.setvariable variable=tag;isOutput=true]$version"
-
 - stage: Test
   displayName: Test
   jobs:
@@ -63,11 +44,15 @@ stages:
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
     pool:
       vmImage: ubuntu-latest
-    variables:
-      tag: $[ stageDependencies.Preconfig.Script.outputs['VersionStep.tag'] ]
     steps:
-    - bash: |
-          echo "$(tag)"
+    - task: PowerShell@2
+      displayName: 'Extract version from pom.xml'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $pomVersion = [xml] (Get-Content pom.xml)
+          $version = $pomVersion.project.version
+          Write-Host "##vso[task.setvariable variable=tag]$version"
     - task: Maven@4
       inputs:
         mavenPomFile: 'pom.xml'
@@ -117,6 +102,14 @@ stages:
     pool:
       vmImage: ubuntu-latest
     steps:
+    - task: PowerShell@2
+      displayName: 'Extract version from pom.xml'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $pomVersion = [xml] (Get-Content pom.xml)
+          $version = $pomVersion.project.version
+          Write-Host "##vso[task.setvariable variable=tag]$version"
     - task: ECRPullImage@1
       displayName: Pull image from dev
       inputs:
@@ -144,6 +137,14 @@ stages:
     pool:
       vmImage: ubuntu-latest
     steps:
+    - task: PowerShell@2
+      displayName: 'Extract version from pom.xml'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $pomVersion = [xml] (Get-Content pom.xml)
+          $version = $pomVersion.project.version
+          Write-Host "##vso[task.setvariable variable=tag]$version"
     - task: ECRPullImage@1
       displayName: Pull image from Staging
       inputs:
