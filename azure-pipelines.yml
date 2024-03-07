@@ -82,16 +82,16 @@ stages:
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         repository: $(devEcrName)
         tags: |
-          $[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]
+          $(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])
     - task: ECRPushImage@1
       displayName: Push image Dev
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
+        sourceImageId: '$(devEcrName):$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
         repositoryName: '$(devEcrName)'
-        pushTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
+        pushTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
 
 #- stage: Deploy Dev
 #  displayName: Deploy Dev
@@ -119,16 +119,16 @@ stages:
         regionName: 'us-east-1'
         repository: '$(devEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
+        imageTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
     - task: ECRPushImage@1
       displayName: Push image Staging
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
+        sourceImageId: '$(devEcrName):$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
         repositoryName: '$(stgEcrName)'
-        pushTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
+        pushTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
 
 - stage: Prod
   displayName: Deploy Prod
@@ -146,13 +146,13 @@ stages:
         regionName: 'us-east-1'
         repository: '$(stgEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
+        imageTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
     - task: ECRPushImage@1
       displayName: Push image Prod
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(stgEcrName):$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
+        sourceImageId: '$(stgEcrName):$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
         repositoryName: '$(prodEcrName)'
-        pushTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
+        pushTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
