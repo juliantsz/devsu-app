@@ -32,7 +32,7 @@ stages:
           gci
           $pomVersion = [xml] (Get-Content pom.xml)
           $version = $pomVersion.project.version
-          Write-Host "##vso[task.setvariable variable=tag;isOutput=true]$version"
+          Write-Output "##vso[task.setvariable variable=tag;isOutput=true]$version"
 
 - stage: Test
   displayName: Test
