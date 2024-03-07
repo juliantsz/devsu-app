@@ -4,14 +4,16 @@
 
 trigger:
 - master
-- feature/*
-- release/*
+- feature-*
+- release-*
 
 resources:
 - repo: self
 
 variables:
-  ecrName: 'utility'
+  devEcrName: 'devsu-dev'
+  stgEcrName: 'devsu-stg'
+  prodEcrName: 'devsu-prod'
 
 stages:
 - stage: Test
@@ -19,7 +21,7 @@ stages:
   jobs:
   - job: Test
     displayName: Test
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/feature/*'))
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
     pool:
       vmImage: ubuntu-latest
     steps:
@@ -33,14 +35,24 @@ stages:
         mavenAuthenticateFeed: false
         effectivePomSkip: false
         sonarQubeRunAnalysis: false
+
 - stage: Build
   displayName: Build And Push
   jobs:
   - job: Build
     displayName: Maven Package
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
     pool:
       vmImage: ubuntu-latest
     steps:
+    - task: PowerShell@2
+      displayName: 'Extract version from pom.xml'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $pomVersion = [xml] (Get-Content pom.xml)
+          $version = $pomVersion.project.version
+          Write-Host "##vso[task.setvariable variable=tag]$version"
     - task: Maven@4
       inputs:
         mavenPomFile: 'pom.xml'
@@ -53,6 +65,43 @@ stages:
         mavenAuthenticateFeed: false
         effectivePomSkip: false
         sonarQubeRunAnalysis: false
+    - task: Docker@2
+      displayName: Build image
+      inputs:
+        command: build
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        repository: $(devEcrName)
+        tags: |
+          $(tag)
+    - task: ECRPushImage@1
+      displayName: Push image Dev
+      inputs:
+        awsCredentials: 'aws-cli-jtuberquia'
+        regionName: 'us-east-1'
+        imageSource: 'imageid'
+        sourceImageId: '$(devEcrName):$(tag)'
+        repositoryName: '$(devEcrName)'
+        pushTag: '$(tag)'
+
+#- stage: Deploy Dev
+#  displayName: Deploy Dev
+#  jobs:
+#  - job: Test
+#    displayName: Test
+#    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
+#    pool:
+#      vmImage: ubuntu-latest
+#    steps:
+    
+- stage: Staging
+  displayName: Deploy Staging
+  jobs:
+  - job: Staging
+    displayName: Pull Image From Dev
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/release'))
+    pool:
+      vmImage: ubuntu-latest
+    steps:
     - task: PowerShell@2
       displayName: 'Extract version from pom.xml'
       inputs:
@@ -61,20 +110,57 @@ stages:
           $pomVersion = [xml] (Get-Content pom.xml)
           $version = $pomVersion.project.version
           Write-Host "##vso[task.setvariable variable=tag]$version"
-    - task: Docker@2
-      displayName: Build image
+    - task: ECRPullImage@1
+      displayName: Pull image from dev
       inputs:
-        command: build
-        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        repository: $(ecrName)
-        tags: |
-          $(tag)
+        awsCredentials: 'aws-cli-jtuberquia'
+        regionName: 'us-east-1'
+        repository: '$(devEcrName)'
+        imageSource: 'imagetag'
+        imageTag: '$(tag)'
+        outputVariable: 'devEcrNameOutput'
     - task: ECRPushImage@1
-      displayName: Push image
+      displayName: Push image Staging
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(ecrName):$(tag)'
-        repositoryName: '$(ecrName)'
+        sourceImageId: '$(devEcrNameOutput)'
+        repositoryName: '$(stgEcrName)'
+        pushTag: '$(tag)'
+
+- stage: Prod
+  displayName: Deploy Prod
+  jobs:
+  - job: Prod
+    displayName: Pull Image From Stg
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: PowerShell@2
+      displayName: 'Extract version from pom.xml'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $pomVersion = [xml] (Get-Content pom.xml)
+          $version = $pomVersion.project.version
+          Write-Host "##vso[task.setvariable variable=tag]$version"
+    - task: ECRPullImage@1
+      displayName: Pull image from Staging
+      inputs:
+        awsCredentials: 'aws-cli-jtuberquia'
+        regionName: 'us-east-1'
+        repository: '$(stgEcrName)'
+        imageSource: 'imagetag'
+        imageTag: '$(tag)'
+        outputVariable: 'stgEcrNameOutput'
+    - task: ECRPushImage@1
+      displayName: Push image Prod
+      inputs:
+        awsCredentials: 'aws-cli-jtuberquia'
+        regionName: 'us-east-1'
+        imageSource: 'imageid'
+        sourceImageId: '$(stgEcrNameOutput)'
+        repositoryName: '$(prodEcrName)'
         pushTag: '$(tag)'
