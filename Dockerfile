@@ -1,5 +1,5 @@
-# Use an existing ARM64 base image
-FROM adoptopenjdk/openjdk17:jdk-17.0.2_12-alpine
+# Use an existing image as the base image
+FROM openjdk:17-jdk-slim
 
 # Set the working directory in the container
 WORKDIR /app
