@@ -11,9 +11,28 @@ resources:
 - repo: self
 
 variables:
-  ecrName: 'utility'
+  devEcrName: 'devsu-dev'
+  stgEcrName: 'devsu-stg'
+  prodEcrName: 'devsu-prod'
 
 stages:
+- stage: Preconfig
+  displayName: Get artifact version
+  jobs:
+  - job: Script
+    displayName: Powershell script
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: PowerShell@2
+      displayName: 'Extract version from pom.xml'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $pomVersion = [xml] (Get-Content pom.xml)
+          $version = $pomVersion.project.version
+          Write-Host "##vso[task.setvariable variable=tag]$version"
+
 - stage: Test
   displayName: Test
   jobs:
@@ -33,11 +52,13 @@ stages:
         mavenAuthenticateFeed: false
         effectivePomSkip: false
         sonarQubeRunAnalysis: false
+
 - stage: Build
   displayName: Build And Push
   jobs:
   - job: Build
     displayName: Maven Package
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/feature/*'))
     pool:
       vmImage: ubuntu-latest
     steps:
@@ -53,28 +74,84 @@ stages:
         mavenAuthenticateFeed: false
         effectivePomSkip: false
         sonarQubeRunAnalysis: false
-    - task: PowerShell@2
-      displayName: 'Extract version from pom.xml'
-      inputs:
-        targetType: 'inline'
-        script: |
-          $pomVersion = [xml] (Get-Content pom.xml)
-          $version = $pomVersion.project.version
-          Write-Host "##vso[task.setvariable variable=tag]$version"
     - task: Docker@2
       displayName: Build image
       inputs:
         command: build
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        repository: $(ecrName)
+        repository: $(devEcrName)
         tags: |
           $(tag)
     - task: ECRPushImage@1
-      displayName: Push image
+      displayName: Push image Dev
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(ecrName):$(tag)'
-        repositoryName: '$(ecrName)'
+        sourceImageId: '$(devEcrName):$(tag)'
+        repositoryName: '$(devEcrName)'
+        pushTag: '$(tag)'
+
+#- stage: Deploy Dev
+#  displayName: Deploy Dev
+#  jobs:
+#  - job: Test
+#    displayName: Test
+#    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/feature/*'))
+#    pool:
+#      vmImage: ubuntu-latest
+#    steps:
+    
+- stage: Deploy Staging
+  displayName: Deploy Staging
+  jobs:
+  - job: Pull Image From Dev
+    displayName: Pull Image From Dev
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/release/*'))
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: ECRPullImage@1
+      displayName: Pull image from dev
+      inputs:
+        awsCredentials: 'aws-cli-jtuberquia'
+        regionName: 'us-east-1'
+        repository: '$(devEcrName)'
+        imageSource: 'imagetag'
+        imageTag: '$(tag)'
+    - task: ECRPushImage@1
+      displayName: Push image Staging
+      inputs:
+        awsCredentials: 'aws-cli-jtuberquia'
+        regionName: 'us-east-1'
+        imageSource: 'imageid'
+        sourceImageId: '$(devEcrName):$(tag)'
+        repositoryName: '$(stgEcrName)'
+        pushTag: '$(tag)'
+
+- stage: Deploy Prod
+  displayName: Deploy Prod
+  jobs:
+  - job: Pull Image From Stg
+    displayName: Pull Image From Stg
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: ECRPullImage@1
+      displayName: Pull image from Staging
+      inputs:
+        awsCredentials: 'aws-cli-jtuberquia'
+        regionName: 'us-east-1'
+        repository: '$(stgEcrName)'
+        imageSource: 'imagetag'
+        imageTag: '$(tag)'
+    - task: ECRPushImage@1
+      displayName: Push image Prod
+      inputs:
+        awsCredentials: 'aws-cli-jtuberquia'
+        regionName: 'us-east-1'
+        imageSource: 'imageid'
+        sourceImageId: '$(stgEcrName):$(tag)'
+        repositoryName: '$(prodEcrName)'
         pushTag: '$(tag)'
