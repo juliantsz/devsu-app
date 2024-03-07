@@ -125,7 +125,7 @@ stages:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrNameOutput):$(tag)'
+        sourceImageId: '$(devEcrNameOutput)'
         repositoryName: '$(stgEcrName)'
         pushTag: '$(tag)'
 
@@ -161,6 +161,6 @@ stages:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(stgEcrNameOutput):$(tag)'
+        sourceImageId: '$(stgEcrNameOutput)'
         repositoryName: '$(prodEcrName)'
         pushTag: '$(tag)'
