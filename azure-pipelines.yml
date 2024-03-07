@@ -102,7 +102,7 @@ stages:
 #      vmImage: ubuntu-latest
 #    steps:
     
-- stage: Deploy Staging
+- stage: Staging
   displayName: Deploy Staging
   jobs:
   - job: Pull Image From Dev
@@ -129,7 +129,7 @@ stages:
         repositoryName: '$(stgEcrName)'
         pushTag: '$(tag)'
 
-- stage: Deploy Prod
+- stage: Prod
   displayName: Deploy Prod
   jobs:
   - job: Pull Image From Stg
