@@ -32,7 +32,7 @@ stages:
           gci
           $pomVersion = [xml] (Get-Content pom.xml)
           $version = $pomVersion.project.version
-          Write-Output "##vso[task.setvariable variable=tag;isOutput=true]$version"
+          Write-Host "##vso[task.setvariable variable=tag;isOutput=true]$version"
 
 - stage: Test
   displayName: Test
@@ -56,7 +56,6 @@ stages:
 
 - stage: Build
   displayName: Build And Push
-  dependsOn: Preconfig
   jobs:
   - job: Build
     displayName: Maven Package
@@ -83,16 +82,16 @@ stages:
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         repository: $(devEcrName)
         tags: |
-          $(Script.tag)
+          $[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]
     - task: ECRPushImage@1
       displayName: Push image Dev
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$(Script.tag)'
+        sourceImageId: '$(devEcrName):$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
         repositoryName: '$(devEcrName)'
-        pushTag: '$(Script.tag)'
+        pushTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
 
 #- stage: Deploy Dev
 #  displayName: Deploy Dev
@@ -106,7 +105,6 @@ stages:
     
 - stage: Staging
   displayName: Deploy Staging
-  dependsOn: Preconfig
   jobs:
   - job: Staging
     displayName: Pull Image From Dev
@@ -121,20 +119,19 @@ stages:
         regionName: 'us-east-1'
         repository: '$(devEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$(Script.tag)'
+        imageTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
     - task: ECRPushImage@1
       displayName: Push image Staging
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$(Script.tag)'
+        sourceImageId: '$(devEcrName):$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
         repositoryName: '$(stgEcrName)'
-        pushTag: '$(Script.tag)'
+        pushTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
 
 - stage: Prod
   displayName: Deploy Prod
-  dependsOn: Preconfig
   jobs:
   - job: Prod
     displayName: Pull Image From Stg
@@ -149,13 +146,13 @@ stages:
         regionName: 'us-east-1'
         repository: '$(stgEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$(Script.tag)'
+        imageTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
     - task: ECRPushImage@1
       displayName: Push image Prod
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(stgEcrName):$(Script.tag)'
+        sourceImageId: '$(stgEcrName):$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
         repositoryName: '$(prodEcrName)'
-        pushTag: '$(Script.tag)'
+        pushTag: '$[stageDependencies.Preconfig.Script.outputs['PowerShell@2.tag']]'
