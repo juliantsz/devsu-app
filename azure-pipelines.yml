@@ -20,6 +20,7 @@ stages:
   displayName: Get artifact version
   jobs:
   - job: Script
+    name: SetTag
     displayName: Powershell script
     pool:
       vmImage: ubuntu-latest
@@ -32,7 +33,7 @@ stages:
           gci
           $pomVersion = [xml] (Get-Content pom.xml)
           $version = $pomVersion.project.version
-          Write-Host "##vso[task.setvariable variable=tag;isOutput=false]$version"
+          Write-Host "##vso[task.setvariable variable=tag;isOutput=true]$version"
 
 - stage: Test
   displayName: Test
@@ -82,16 +83,16 @@ stages:
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         repository: $(devEcrName)
         tags: |
-          $(tag)
+          $(SetTag.tag)
     - task: ECRPushImage@1
       displayName: Push image Dev
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$(tag)'
+        sourceImageId: '$(devEcrName):$(SetTag.tag)'
         repositoryName: '$(devEcrName)'
-        pushTag: '$(tag)'
+        pushTag: '$(SetTag.tag)'
 
 #- stage: Deploy Dev
 #  displayName: Deploy Dev
@@ -119,16 +120,16 @@ stages:
         regionName: 'us-east-1'
         repository: '$(devEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$(tag)'
+        imageTag: '$(SetTag.tag)'
     - task: ECRPushImage@1
       displayName: Push image Staging
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$(tag)'
+        sourceImageId: '$(devEcrName):$(SetTag.tag)'
         repositoryName: '$(stgEcrName)'
-        pushTag: '$(tag)'
+        pushTag: '$(SetTag.tag)'
 
 - stage: Prod
   displayName: Deploy Prod
@@ -146,13 +147,13 @@ stages:
         regionName: 'us-east-1'
         repository: '$(stgEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$(tag)'
+        imageTag: '$(SetTag.tag)'
     - task: ECRPushImage@1
       displayName: Push image Prod
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(stgEcrName):$(tag)'
+        sourceImageId: '$(stgEcrName):$(SetTag.tag)'
         repositoryName: '$(prodEcrName)'
-        pushTag: '$(tag)'
+        pushTag: '$(SetTag.tag)'
