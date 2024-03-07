@@ -38,7 +38,7 @@ stages:
   jobs:
   - job: Test
     displayName: Test
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/'))
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
     pool:
       vmImage: ubuntu-latest
     steps:
@@ -58,7 +58,7 @@ stages:
   jobs:
   - job: Build
     displayName: Maven Package
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/'))
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
     pool:
       vmImage: ubuntu-latest
     steps:
@@ -97,7 +97,7 @@ stages:
 #  jobs:
 #  - job: Test
 #    displayName: Test
-#    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/'))
+#    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
 #    pool:
 #      vmImage: ubuntu-latest
 #    steps:
@@ -107,7 +107,7 @@ stages:
   jobs:
   - job: Staging
     displayName: Pull Image From Dev
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/release'))
     pool:
       vmImage: ubuntu-latest
     steps:
