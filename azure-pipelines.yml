@@ -66,6 +66,8 @@ stages:
     variables:
       tag: $[ stageDependencies.Preconfig.Script.outputs['VersionStep.tag'] ]
     steps:
+    - bash: |
+          echo "$(tag)"
     - task: Maven@4
       inputs:
         mavenPomFile: 'pom.xml'
