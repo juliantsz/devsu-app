@@ -32,17 +32,17 @@ stages:
         effectivePomSkip: false
         sonarQubeRunAnalysis: false
 - stage: Build
-  displayName: Build image
+  displayName: Build And Push
   jobs:
   - job: Build
-    displayName: Build
+    displayName: Maven Package
     pool:
       vmImage: ubuntu-latest
     steps:
     - task: Maven@4
       inputs:
         mavenPomFile: 'pom.xml'
-        goals: 'install'
+        goals: 'package'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         javaHomeOption: 'JDKVersion'
@@ -52,7 +52,7 @@ stages:
         effectivePomSkip: false
         sonarQubeRunAnalysis: false
     - task: Docker@2
-      displayName: Build an image
+      displayName: Build image
       inputs:
         command: build
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
@@ -60,6 +60,7 @@ stages:
         tags: |
           $(tag)
     - task: ECRPushImage@1
+      displayName: Push image
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
