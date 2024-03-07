@@ -55,8 +55,8 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          $pomFile = Get-Content -Path pom.xml
-          $version = ($pomFile | Select-String -Pattern '<version>(.*)</version>').Matches.Groups[1].Value
+          $pomVersion = [xml] (Get-Content pom.xml)
+          $version = $pomVersion.project.version
           Write-Host "##vso[task.setvariable variable=tag]$version"
     - task: Docker@2
       displayName: Build image
