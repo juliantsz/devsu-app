@@ -20,7 +20,6 @@ stages:
   displayName: Get artifact version
   jobs:
   - job: Script
-    name: SetTag
     displayName: Powershell script
     pool:
       vmImage: ubuntu-latest
@@ -83,16 +82,16 @@ stages:
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         repository: $(devEcrName)
         tags: |
-          $(SetTag.tag)
+          $(Script.tag)
     - task: ECRPushImage@1
       displayName: Push image Dev
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$(SetTag.tag)'
+        sourceImageId: '$(devEcrName):$(Script.tag)'
         repositoryName: '$(devEcrName)'
-        pushTag: '$(SetTag.tag)'
+        pushTag: '$(Script.tag)'
 
 #- stage: Deploy Dev
 #  displayName: Deploy Dev
@@ -120,16 +119,16 @@ stages:
         regionName: 'us-east-1'
         repository: '$(devEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$(SetTag.tag)'
+        imageTag: '$(Script.tag)'
     - task: ECRPushImage@1
       displayName: Push image Staging
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$(SetTag.tag)'
+        sourceImageId: '$(devEcrName):$(Script.tag)'
         repositoryName: '$(stgEcrName)'
-        pushTag: '$(SetTag.tag)'
+        pushTag: '$(Script.tag)'
 
 - stage: Prod
   displayName: Deploy Prod
@@ -147,13 +146,13 @@ stages:
         regionName: 'us-east-1'
         repository: '$(stgEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$(SetTag.tag)'
+        imageTag: '$(Script.tag)'
     - task: ECRPushImage@1
       displayName: Push image Prod
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(stgEcrName):$(SetTag.tag)'
+        sourceImageId: '$(stgEcrName):$(Script.tag)'
         repositoryName: '$(prodEcrName)'
-        pushTag: '$(SetTag.tag)'
+        pushTag: '$(Script.tag)'
