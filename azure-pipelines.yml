@@ -29,8 +29,10 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
+          gci -Force
           $pomVersion = [xml] (Get-Content pom.xml)
           $version = $pomVersion.project.version
+          Write-Output $version
           Write-Host "##vso[task.setvariable variable=tag]$version"
 
 - stage: Test
