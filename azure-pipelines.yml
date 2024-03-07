@@ -25,6 +25,7 @@ stages:
       vmImage: ubuntu-latest
     steps:
     - task: PowerShell@2
+      name: VersionStep
       displayName: 'Extract version from pom.xml'
       inputs:
         targetType: 'inline'
@@ -62,6 +63,8 @@ stages:
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
     pool:
       vmImage: ubuntu-latest
+    variables:
+      tag: $[ stageDependencies.Preconfig.Script.outputs['VersionStep.tag'] ]
     steps:
     - task: Maven@4
       inputs:
@@ -82,16 +85,16 @@ stages:
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         repository: $(devEcrName)
         tags: |
-          $(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])
+          $(tag)
     - task: ECRPushImage@1
       displayName: Push image Dev
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
+        sourceImageId: '$(devEcrName):$(tag)'
         repositoryName: '$(devEcrName)'
-        pushTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
+        pushTag: '$(tag)'
 
 #- stage: Deploy Dev
 #  displayName: Deploy Dev
@@ -119,16 +122,16 @@ stages:
         regionName: 'us-east-1'
         repository: '$(devEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
+        imageTag: '$(tag)'
     - task: ECRPushImage@1
       displayName: Push image Staging
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
+        sourceImageId: '$(devEcrName):$(tag)'
         repositoryName: '$(stgEcrName)'
-        pushTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
+        pushTag: '$(tag)'
 
 - stage: Prod
   displayName: Deploy Prod
@@ -146,13 +149,13 @@ stages:
         regionName: 'us-east-1'
         repository: '$(stgEcrName)'
         imageSource: 'imagetag'
-        imageTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
+        imageTag: '$(tag)'
     - task: ECRPushImage@1
       displayName: Push image Prod
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(stgEcrName):$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
+        sourceImageId: '$(stgEcrName):$(tag)'
         repositoryName: '$(prodEcrName)'
-        pushTag: '$(stageDependencies.Preconfig.Script.outputs['setvariable.tag'])'
+        pushTag: '$(tag)'
