@@ -4,8 +4,8 @@
 
 trigger:
 - master
-- feature/*
-- release/*
+- feature-*
+- release-*
 
 resources:
 - repo: self
