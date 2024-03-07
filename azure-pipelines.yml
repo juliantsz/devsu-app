@@ -118,13 +118,14 @@ stages:
         repository: '$(devEcrName)'
         imageSource: 'imagetag'
         imageTag: '$(tag)'
+        outputVariable: 'devEcrNameOutput'
     - task: ECRPushImage@1
       displayName: Push image Staging
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(devEcrName):$(tag)'
+        sourceImageId: '$(devEcrNameOutput):$(tag)'
         repositoryName: '$(stgEcrName)'
         pushTag: '$(tag)'
 
@@ -153,12 +154,13 @@ stages:
         repository: '$(stgEcrName)'
         imageSource: 'imagetag'
         imageTag: '$(tag)'
+        outputVariable: 'stgEcrNameOutput'
     - task: ECRPushImage@1
       displayName: Push image Prod
       inputs:
         awsCredentials: 'aws-cli-jtuberquia'
         regionName: 'us-east-1'
         imageSource: 'imageid'
-        sourceImageId: '$(stgEcrName):$(tag)'
+        sourceImageId: '$(stgEcrNameOutput):$(tag)'
         repositoryName: '$(prodEcrName)'
         pushTag: '$(tag)'
