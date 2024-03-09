@@ -2,10 +2,10 @@
 # Build a Docker image
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
-trigger:
-- master
-- feature-*
-- release-*
+#trigger:
+#- master
+#- feature-*
+#- release-*
 
 resources:
 - repo: self
@@ -82,19 +82,9 @@ stages:
         sourceImageId: '$(devEcrName):$(tag)'
         repositoryName: '$(devEcrName)'
         pushTag: '$(tag)'
-
-#- stage: Deploy Dev
-#  displayName: Deploy Dev
-#  jobs:
-#  - job: Test
-#    displayName: Test
-#    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
-#    pool:
-#      vmImage: ubuntu-latest
-#    steps:
     
 - stage: Staging
-  displayName: Deploy Staging
+  displayName: Staging
   jobs:
   - job: Staging
     displayName: Pull Image From Dev
@@ -130,7 +120,7 @@ stages:
         pushTag: '$(tag)'
 
 - stage: Prod
-  displayName: Deploy Prod
+  displayName: Prod
   jobs:
   - job: Prod
     displayName: Pull Image From Stg
