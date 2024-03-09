@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: devsu
+  name: devsu-stg-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devsu-stg
+  template:
+    metadata:
+      labels:
+        app: devsu-stg
+    spec:
+      containers:
+      - name: devsu-stg
+        image: 166472935010.dkr.ecr.us-east-1.amazonaws.com/devsu-stg:0.0.1
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "100Mi"
+            cpu: "100m"
+          limits:
+            memory: "200Mi"
+            cpu: "200m"

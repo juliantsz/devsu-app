@@ -1,45 +1,3 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  namespace: devsu
-  name: devsu-stg-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: devsu-stg
-  template:
-    metadata:
-      labels:
-        app: devsu-stg
-    spec:
-      containers:
-      - name: devsu-stg
-        image: 166472935010.dkr.ecr.us-east-1.amazonaws.com/devsu-stg:0.0.1
-        ports:
-        - containerPort: 8000
-        resources:
-          requests:
-            memory: "100Mi"
-            cpu: "100m"
-          limits:
-            memory: "200Mi"
-            cpu: "200m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  namespace: devsu
-  name: devsu-stg-service
-spec:
-  selector:
-    app: devsu-stg
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8000
-  type: NodePort
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -58,19 +16,19 @@ metadata:
     alb.ingress.kubernetes.io/healthy-threshold-count: '2'
     alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
     alb.ingress.kubernetes.io/success-codes: '200'
-     external-dns.alpha.kubernetes.io/hostname: devsu-prod.jtuberquia.com
-  name: devsu-stg-ingress
+    external-dns.alpha.kubernetes.io/hostname: devsu-dev.jtuberquia.com
+  name: devsu-dev-ingress
   namespace: devsu
 spec:
   ingressClassName: alb
   rules:
-    - host: devsu-stg.jtuberquia.com
+    - host: devsu-dev.jtuberquia.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: devsu-stg-service
+                name: devsu-dev-service
                 port:
                   number: 80

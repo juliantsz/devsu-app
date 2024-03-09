@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: devsu
+  name: devsu-prod-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devsu-prod
+  template:
+    metadata:
+      labels:
+        app: devsu-prod
+    spec:
+      containers:
+      - name: devsu-prod
+        image: 166472935010.dkr.ecr.us-east-1.amazonaws.com/devsu-prod:0.0.1
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "100Mi"
+            cpu: "100m"
+          limits:
+            memory: "200Mi"
+            cpu: "200m"
