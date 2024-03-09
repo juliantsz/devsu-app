@@ -16,7 +16,7 @@ metadata:
     alb.ingress.kubernetes.io/healthy-threshold-count: '2'
     alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
     alb.ingress.kubernetes.io/success-codes: '200'
-     external-dns.alpha.kubernetes.io/hostname: devsu-stg.jtuberquia.com
+    external-dns.alpha.kubernetes.io/hostname: devsu-stg.jtuberquia.com
   name: devsu-prod-ingress
   namespace: devsu
 spec:
